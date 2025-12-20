@@ -47,7 +47,7 @@ Settings:AddKeybind("Toggle Key", Enum.KeyCode.RightControl, Main)
 -- Disable Blur Toggle
 Settings:AddToggle("Disable Blur", function(state)
     if Main.BlurObject then
-        Main.BlurObject.Size = state and 0 or 20 -- 0 turns it off effectively
+        Main.BlurObject.Enabled = not state
     end
 end)
 
