@@ -72,6 +72,18 @@ function Library:Init(defaultKey)
 	mainTitle.BackgroundTransparency = 1
 	mainTitle.Parent = brandFrame
 
+	local subTitle = Instance.new("TextLabel")
+	subTitle.Text = "v1.0.0"
+	subTitle.Size = UDim2.new(0, 0, 1, 0)
+	subTitle.Position = UDim2.new(1, 10, 0, 5)
+	subTitle.AutomaticSize = Enum.AutomaticSize.X
+	subTitle.Font = Enum.Font.SourceSans
+	subTitle.TextSize = 18
+	subTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+	subTitle.TextXAlignment = Enum.TextXAlignment.Left
+	subTitle.BackgroundTransparency = 1
+	subTitle.Parent = mainTitle
+
 	-- Visibility Toggle
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
@@ -204,8 +216,8 @@ function Library:NewWindow(title, startPos)
 		UIS.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update() end end)
 	end
 
-    function window:AddKeybind(text, default, libObj, callback)
-        local btn = Instance.new("TextButton")
+	function window:AddKeybind(text, default, libObj)
+		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(0.9, 0, 0, 22)
 		btn.BackgroundTransparency = 1
 		btn.Text = text .. ": " .. default.Name
@@ -215,18 +227,18 @@ function Library:NewWindow(title, startPos)
 		btn.TextXAlignment = Enum.TextXAlignment.Left
 		btn.Parent = list
 
-        btn.MouseButton1Click:Connect(function()
-            btn.Text = "... Press a Key ..."
-            local inputWait;
-            inputWait = UIS.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Keyboard then
-                    libObj.ToggleKey = input.KeyCode
-                    btn.Text = text .. ": " .. input.KeyCode.Name
-                    inputWait:Disconnect()
-                end
-            end)
-        end)
-    end
+		btn.MouseButton1Click:Connect(function()
+			btn.Text = "... Press a Key ..."
+			local inputWait;
+			inputWait = UIS.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.Keyboard then
+					libObj.ToggleKey = input.KeyCode
+					btn.Text = text .. ": " .. input.KeyCode.Name
+					inputWait:Disconnect()
+				end
+			end)
+		end)
+	end
 
 	return window
 end
