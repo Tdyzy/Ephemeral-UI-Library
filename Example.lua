@@ -55,5 +55,8 @@ end)
 
 -- Destroy UI lib
 Settings:AddButton("Destroy UI", function()
-    game:GetService("CoreGui"):FindFirstChild("Ephemeral_Lib"):Destroy()
+    local ui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("Ephemeral_Lib")
+    if ui then
+        ui:Destroy()
+    end
 end)
