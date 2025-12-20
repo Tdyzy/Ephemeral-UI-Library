@@ -2,7 +2,6 @@
 local Library = {}
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 -- Styling
@@ -47,13 +46,6 @@ function Library:Init(defaultKey)
 	mainContainer.BackgroundTransparency = 1
 	mainContainer.Parent = sg
 
-	-- Background blur
-	local blur = Instance.new("BlurEffect")
-	blur.Name = "EphemeralBlur"
-	blur.Size = 20
-	blur.Parent = Lighting
-	self.BlurObject = blur -- Store it so we can toggle it
-
 	-- Branding
 	local brandFrame = Instance.new("Frame")
 	brandFrame.Size = UDim2.new(0, 300, 0, 50)
@@ -91,10 +83,6 @@ function Library:Init(defaultKey)
 		if not gpe and input.KeyCode == self.ToggleKey then
 			visible = not visible
 			mainContainer.Visible = visible
-			-- Only show blur if UI is visible and blur hasn't been "Disabled" in settings
-			if self.BlurObject then
-				self.BlurObject.Enabled = visible
-			end
 		end
 	end)
 
