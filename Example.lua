@@ -28,7 +28,7 @@ Movement:AddToggle("Spin Bot", function(state)
     end)
 end)
 
--- ettings Window
+-- settings Window
 local Settings = Main:NewWindow("Settings", UDim2.new(0.35, 0, 0.2, 0))
 Settings:AddKeybind("Toggle Key", Enum.KeyCode.RightControl, Main)
 
