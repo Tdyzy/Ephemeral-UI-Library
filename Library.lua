@@ -1,8 +1,11 @@
--- Tdyyyz UI Library
--- Features: Draggable, Keybind Toggle, Toggles, Sliders
+-- Ephemeral UI Library
+-- Features: Draggable, Keybind System, Toggles, Sliders, Buttons, Labels
+
+-- Variables
 local Library = {}
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 -- Styling
@@ -11,7 +14,6 @@ local BG_COLOR = Color3.fromRGB(30, 30, 30)
 local TEXT_COLOR = Color3.fromRGB(220, 220, 220)
 local FONT = Enum.Font.SourceSansBold
 
--- Dragging function
 local function MakeDraggable(gui, handle)
 	local dragging, dragInput, dragStart, startPos
 	handle.InputBegan:Connect(function(input)
@@ -35,9 +37,9 @@ local function MakeDraggable(gui, handle)
 	end)
 end
 
-function Library:Init(toggleKey)
+function Library:Init(defaultKey)
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "JailbreakHaxx_Lib"
+	sg.Name = "Ephemeral_Lib"
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
@@ -47,11 +49,41 @@ function Library:Init(toggleKey)
 	mainContainer.BackgroundTransparency = 1
 	mainContainer.Parent = sg
 
-	-- Toggle GUI Visibility
+	-- Branding
+	local brandFrame = Instance.new("Frame")
+	brandFrame.Size = UDim2.new(0, 300, 0, 50)
+	brandFrame.Position = UDim2.new(0, 20, 0, 20)
+	brandFrame.BackgroundTransparency = 1
+	brandFrame.Parent = mainContainer
+
+	local mainTitle = Instance.new("TextLabel")
+	mainTitle.Text = "ephemeral"
+	mainTitle.Size = UDim2.new(0, 0, 1, 0)
+	mainTitle.AutomaticSize = Enum.AutomaticSize.X
+	mainTitle.Font = FONT
+	mainTitle.TextSize = 35
+	mainTitle.TextColor3 = Color3.fromRGB(130, 0, 255)
+	mainTitle.TextXAlignment = Enum.TextXAlignment.Left
+	mainTitle.BackgroundTransparency = 1
+	mainTitle.Parent = brandFrame
+
+	local subTitle = Instance.new("TextLabel")
+	subTitle.Text = "v1.0.0"
+	subTitle.Size = UDim2.new(0, 0, 1, 0)
+	subTitle.Position = UDim2.new(1, 10, 0, 5)
+	subTitle.AutomaticSize = Enum.AutomaticSize.X
+	subTitle.Font = Enum.Font.SourceSans
+	subTitle.TextSize = 18
+	subTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+	subTitle.TextXAlignment = Enum.TextXAlignment.Left
+	subTitle.BackgroundTransparency = 1
+	subTitle.Parent = mainTitle
+
+	-- Keybind Toggle Logic
+	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
-	local key = toggleKey or Enum.KeyCode.RightControl
 	UIS.InputBegan:Connect(function(input, gpe)
-		if not gpe and input.KeyCode == key then
+		if not gpe and input.KeyCode == self.ToggleKey then
 			visible = not visible
 			mainContainer.Visible = visible
 		end
@@ -65,8 +97,8 @@ function Library:NewWindow(title, startPos)
 	local window = {}
 	local column = Instance.new("Frame")
 	column.Name = title
-	column.Size = UDim2.new(0, 150, 0, 0)
-	column.Position = startPos or UDim2.new(0.1, 0, 0.1, 0)
+	column.Size = UDim2.new(0, 160, 0, 0)
+	column.Position = startPos or UDim2.new(0.1, 0, 0.2, 0)
 	column.AutomaticSize = Enum.AutomaticSize.Y
 	column.BackgroundColor3 = BG_COLOR
 	column.BackgroundTransparency = 0.2
@@ -81,8 +113,7 @@ function Library:NewWindow(title, startPos)
 	header.Font = FONT
 	header.TextSize = 17
 	header.Parent = column
-	
-	MakeDraggable(column, header) -- Draggable by the top
+	MakeDraggable(column, header)
 
 	local list = Instance.new("Frame")
 	list.Size = UDim2.new(1, 0, 0, 0)
@@ -90,11 +121,37 @@ function Library:NewWindow(title, startPos)
 	list.AutomaticSize = Enum.AutomaticSize.Y
 	list.BackgroundTransparency = 1
 	list.Parent = column
-
-	local vLayout = Instance.new("UIListLayout")
-	vLayout.Padding = UDim.new(0, 5)
-	vLayout.Parent = list
+	Instance.new("UIListLayout", list).Padding = UDim.new(0, 5)
 	Instance.new("UIPadding", list).PaddingLeft = UDim.new(0, 10)
+
+	function window:AddLabel(text)
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(0.9, 0, 0, 20)
+		label.BackgroundTransparency = 1
+		label.Text = text
+		label.TextColor3 = Color3.fromRGB(180, 180, 180)
+		label.Font = Enum.Font.SourceSansItalic
+		label.TextSize = 14
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = list
+		return label
+	end
+
+	function window:AddButton(text, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0.9, 0, 0, 22)
+		btn.BackgroundTransparency = 1
+		btn.Text = "[ " .. text .. " ]"
+		btn.TextColor3 = TEXT_COLOR
+		btn.Font = FONT
+		btn.TextSize = 15
+		btn.TextXAlignment = Enum.TextXAlignment.Left
+		btn.Parent = list
+		btn.MouseButton1Click:Connect(function()
+			btn.TextColor3 = PURPLE task.wait(0.1) btn.TextColor3 = TEXT_COLOR
+			callback()
+		end)
+	end
 
 	function window:AddToggle(text, callback)
 		local btn = Instance.new("TextButton")
@@ -106,7 +163,6 @@ function Library:NewWindow(title, startPos)
 		btn.TextSize = 15
 		btn.TextXAlignment = Enum.TextXAlignment.Left
 		btn.Parent = list
-
 		local enabled = false
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
@@ -120,7 +176,6 @@ function Library:NewWindow(title, startPos)
 		sliderFrame.Size = UDim2.new(0.9, 0, 0, 35)
 		sliderFrame.BackgroundTransparency = 1
 		sliderFrame.Parent = list
-
 		local label = Instance.new("TextLabel")
 		label.Size = UDim2.new(1, 0, 0, 15)
 		label.BackgroundTransparency = 1
@@ -130,20 +185,15 @@ function Library:NewWindow(title, startPos)
 		label.TextSize = 14
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = sliderFrame
-
 		local barBg = Instance.new("Frame")
 		barBg.Size = UDim2.new(1, 0, 0, 5)
 		barBg.Position = UDim2.new(0, 0, 0, 22)
 		barBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-		barBg.BorderSizePixel = 0
 		barBg.Parent = sliderFrame
-
 		local barFill = Instance.new("Frame")
 		barFill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
 		barFill.BackgroundColor3 = PURPLE
-		barFill.BorderSizePixel = 0
 		barFill.Parent = barBg
-
 		local dragging = false
 		local function update()
 			local percent = math.clamp((UIS:GetMouseLocation().X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
@@ -152,17 +202,37 @@ function Library:NewWindow(title, startPos)
 			label.Text = text .. ": " .. value
 			callback(value)
 		end
-
-		barBg.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true update() end
-		end)
-		UIS.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-		end)
-		UIS.InputChanged:Connect(function(input)
-			if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update() end
-		end)
+		barBg.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true update() end end)
+		UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+		UIS.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update() end end)
 	end
+
+    -- Special Function for changing Keybinds
+    function window:AddKeybind(text, default, libObj, callback)
+        local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0.9, 0, 0, 22)
+		btn.BackgroundTransparency = 1
+		btn.Text = text .. ": " .. default.Name
+		btn.TextColor3 = TEXT_COLOR
+		btn.Font = FONT
+		btn.TextSize = 15
+		btn.TextXAlignment = Enum.TextXAlignment.Left
+		btn.Parent = list
+
+        btn.MouseButton1Click:Connect(function()
+            btn.Text = "... Press a Key ..."
+            local inputWait;
+            inputWait = UIS.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.Keyboard then
+                    libObj.ToggleKey = input.KeyCode
+                    btn.Text = text .. ": " .. input.KeyCode.Name
+                    inputWait:Disconnect()
+                end
+            end)
+        end)
+    end
 
 	return window
 end
+
+return Library
