@@ -46,10 +46,8 @@ Settings:AddKeybind("Toggle Key", Enum.KeyCode.RightControl, Main)
 
 -- Disable Blur Toggle
 Settings:AddToggle("Disable Blur", function(state)
-    for _, effect in pairs(game:GetService("Lighting"):GetChildren()) do
-        if effect:IsA("BlurEffect") then
-            effect.Enabled = not state -- If toggle is true (on), set enabled to false
-        end
+    if Main.BlurObject then
+        Main.BlurObject.Size = state and 0 or 20 -- 0 turns it off effectively
     end
 end)
 
