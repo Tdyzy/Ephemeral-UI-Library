@@ -1,6 +1,3 @@
--- Ephemeral UI Library
--- Features: Draggable, Keybind System, Toggles, Sliders, Buttons, Labels
-
 -- Variables
 local Library = {}
 local Players = game:GetService("Players")
@@ -14,6 +11,7 @@ local BG_COLOR = Color3.fromRGB(30, 30, 30)
 local TEXT_COLOR = Color3.fromRGB(220, 220, 220)
 local FONT = Enum.Font.SourceSansBold
 
+-- Dragging
 local function MakeDraggable(gui, handle)
 	local dragging, dragInput, dragStart, startPos
 	handle.InputBegan:Connect(function(input)
@@ -49,6 +47,13 @@ function Library:Init(defaultKey)
 	mainContainer.BackgroundTransparency = 1
 	mainContainer.Parent = sg
 
+	-- Background blur
+	local blur = Instance.new("BlurEffect")
+	blur.Name = "EphemeralBlur"
+	blur.Size = 20
+	blur.Parent = Lighting
+	self.BlurObject = blur -- Store it so we can toggle it
+
 	-- Branding
 	local brandFrame = Instance.new("Frame")
 	brandFrame.Size = UDim2.new(0, 300, 0, 50)
@@ -62,30 +67,22 @@ function Library:Init(defaultKey)
 	mainTitle.AutomaticSize = Enum.AutomaticSize.X
 	mainTitle.Font = FONT
 	mainTitle.TextSize = 35
-	mainTitle.TextColor3 = Color3.fromRGB(130, 0, 255)
+	mainTitle.TextColor3 = PURPLE
 	mainTitle.TextXAlignment = Enum.TextXAlignment.Left
 	mainTitle.BackgroundTransparency = 1
 	mainTitle.Parent = brandFrame
 
-	local subTitle = Instance.new("TextLabel")
-	subTitle.Text = "v1.0.0"
-	subTitle.Size = UDim2.new(0, 0, 1, 0)
-	subTitle.Position = UDim2.new(1, 10, 0, 5)
-	subTitle.AutomaticSize = Enum.AutomaticSize.X
-	subTitle.Font = Enum.Font.SourceSans
-	subTitle.TextSize = 18
-	subTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
-	subTitle.TextXAlignment = Enum.TextXAlignment.Left
-	subTitle.BackgroundTransparency = 1
-	subTitle.Parent = mainTitle
-
-	-- Keybind Toggle Logic
+	-- Visibility Toggle
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
 	UIS.InputBegan:Connect(function(input, gpe)
 		if not gpe and input.KeyCode == self.ToggleKey then
 			visible = not visible
 			mainContainer.Visible = visible
+			-- Only show blur if UI is visible and blur hasn't been "Disabled" in settings
+			if self.BlurObject then
+				self.BlurObject.Enabled = visible
+			end
 		end
 	end)
 
@@ -207,7 +204,6 @@ function Library:NewWindow(title, startPos)
 		UIS.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update() end end)
 	end
 
-    -- Special Function for changing Keybinds
     function window:AddKeybind(text, default, libObj, callback)
         local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(0.9, 0, 0, 22)
