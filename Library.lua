@@ -10,7 +10,7 @@ local BG_COLOR = Color3.fromRGB(30, 30, 30)
 local TEXT_COLOR = Color3.fromRGB(220, 220, 220)
 local FONT = Enum.Font.SourceSansBold
 
--- Dragging
+-- Dragging logic
 local function MakeDraggable(gui, handle)
 	local dragging, dragInput, dragStart, startPos
 	handle.InputBegan:Connect(function(input)
@@ -76,7 +76,6 @@ function Library:Init(defaultKey)
 	subTitle.BackgroundTransparency = 1
 	subTitle.Parent = mainTitle
 
-	-- Visibility Toggle
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
 	UIS.InputBegan:Connect(function(input, gpe)
@@ -94,7 +93,7 @@ function Library:NewWindow(title, startPos)
 	local window = {}
 	local column = Instance.new("Frame")
 	column.Name = title
-	column.Size = UDim2.new(0, 160, 0, 0)
+	column.Size = UDim2.new(0, 170, 0, 30) -- Slightly wider for better slider look
 	column.Position = startPos or UDim2.new(0.1, 0, 0.2, 0)
 	column.AutomaticSize = Enum.AutomaticSize.Y
 	column.BackgroundColor3 = BG_COLOR
@@ -113,17 +112,23 @@ function Library:NewWindow(title, startPos)
 	MakeDraggable(column, header)
 
 	local list = Instance.new("Frame")
+	list.Name = "Container"
 	list.Size = UDim2.new(1, 0, 0, 0)
-	list.Position = UDim2.new(0, 0, 0, 28)
+	list.Position = UDim2.new(0, 0, 0, 32) -- Start below header
 	list.AutomaticSize = Enum.AutomaticSize.Y
 	list.BackgroundTransparency = 1
 	list.Parent = column
-	Instance.new("UIListLayout", list).Padding = UDim.new(0, 5)
+
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 8) -- Space between elements
+	layout.Parent = list
+	
 	Instance.new("UIPadding", list).PaddingLeft = UDim.new(0, 10)
 
 	function window:AddLabel(text)
 		local label = Instance.new("TextLabel")
-		label.Size = UDim2.new(0.9, 0, 0, 20)
+		label.Size = UDim2.new(0.9, 0, 0, 18)
 		label.BackgroundTransparency = 1
 		label.Text = text
 		label.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -131,7 +136,6 @@ function Library:NewWindow(title, startPos)
 		label.TextSize = 14
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = list
-		return label
 	end
 
 	function window:AddButton(text, callback)
@@ -170,9 +174,10 @@ function Library:NewWindow(title, startPos)
 
 	function window:AddSlider(text, min, max, default, callback)
 		local sliderFrame = Instance.new("Frame")
-		sliderFrame.Size = UDim2.new(0.9, 0, 0, 35)
+		sliderFrame.Size = UDim2.new(0.9, 0, 0, 38)
 		sliderFrame.BackgroundTransparency = 1
 		sliderFrame.Parent = list
+
 		local label = Instance.new("TextLabel")
 		label.Size = UDim2.new(1, 0, 0, 15)
 		label.BackgroundTransparency = 1
@@ -182,15 +187,20 @@ function Library:NewWindow(title, startPos)
 		label.TextSize = 14
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = sliderFrame
+
 		local barBg = Instance.new("Frame")
-		barBg.Size = UDim2.new(1, 0, 0, 5)
-		barBg.Position = UDim2.new(0, 0, 0, 22)
+		barBg.Size = UDim2.new(1, 0, 0, 6)
+		barBg.Position = UDim2.new(0, 0, 0, 24)
 		barBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		barBg.BorderSizePixel = 0
 		barBg.Parent = sliderFrame
+
 		local barFill = Instance.new("Frame")
 		barFill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
 		barFill.BackgroundColor3 = PURPLE
+		barFill.BorderSizePixel = 0
 		barFill.Parent = barBg
+
 		local dragging = false
 		local function update()
 			local percent = math.clamp((UIS:GetMouseLocation().X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
@@ -214,7 +224,6 @@ function Library:NewWindow(title, startPos)
 		btn.TextSize = 15
 		btn.TextXAlignment = Enum.TextXAlignment.Left
 		btn.Parent = list
-
 		btn.MouseButton1Click:Connect(function()
 			btn.Text = "... Press a Key ..."
 			local inputWait;
