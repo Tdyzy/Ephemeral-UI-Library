@@ -7,8 +7,8 @@ local player = Players.LocalPlayer
 
 -- Styling (Accurate to Image)
 local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
-local MAIN_COLOR = Color3.fromRGB(130, 0, 255) -- The accent color
-local BG_TRANSPARENCY = 0.4 -- Accurate see-through look from image
+local MAIN_COLOR = Color3.fromRGB(130, 0, 255) 
+local BG_TRANSPARENCY = 0.4 
 local FONT = Enum.Font.SourceSansBold
 
 -- Dragging logic
@@ -38,7 +38,7 @@ function Library:Init(defaultKey)
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
-	-- The Main Container (Screen Size to allow full movement)
+	-- Main Container
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "Main"
 	mainFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -59,7 +59,7 @@ function Library:Init(defaultKey)
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
 
-	-- Blur Logic
+	-- Blur Effect
 	local blur = Instance.new("BlurEffect")
 	blur.Size = 18
 	blur.Enabled = true
@@ -78,6 +78,7 @@ function Library:Init(defaultKey)
 	end)
 
 	self.Container = mainFrame
+    self.AccentObjects = {} -- Store for RGB
 	return self
 end
 
@@ -93,16 +94,22 @@ function Library:NewWindow(title, xOffset)
 	column.BorderSizePixel = 0
 	column.Parent = self.Container
 
-	local header = Instance.new("TextLabel")
+	local header = Instance.new("Frame")
 	header.Size = UDim2.new(1, 0, 0, 26)
 	header.BackgroundColor3 = MAIN_COLOR
 	header.BorderSizePixel = 0
-	header.Text = title
-	header.TextColor3 = Color3.new(1, 1, 1)
-	header.Font = FONT
-	header.TextSize = 15
 	header.Parent = column
+    table.insert(self.AccentObjects, header)
 	
+	local headerTitle = Instance.new("TextLabel")
+    headerTitle.Size = UDim2.new(1, 0, 1, 0)
+    headerTitle.BackgroundTransparency = 1
+    headerTitle.Text = title
+    headerTitle.TextColor3 = Color3.new(1, 1, 1)
+    headerTitle.Font = FONT
+    headerTitle.TextSize = 15
+    headerTitle.Parent = header
+
 	MakeDraggable(column, header)
 
 	local list = Instance.new("Frame")
@@ -130,12 +137,28 @@ function Library:NewWindow(title, xOffset)
 		local enabled = false
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
-			btn.TextColor3 = enabled and MAIN_COLOR or TEXT_COLOR
+            -- Toggle text color between White and the current Accent Color
+			btn.TextColor3 = enabled and header.BackgroundColor3 or TEXT_COLOR
 			callback(enabled)
 		end)
 	end
 
 	return window
+end
+
+-- Smooth RGB Cycle Function
+function Library:EnableRGB()
+    task.spawn(function()
+        local h = 0
+        while task.wait() do
+            h = h + (1/300)
+            if h > 1 then h = 0 end
+            local color = Color3.fromHSV(h, 0.8, 1)
+            for _, obj in pairs(self.AccentObjects) do
+                obj.BackgroundColor3 = color
+            end
+        end
+    end)
 end
 
 return Library
