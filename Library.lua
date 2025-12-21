@@ -2,7 +2,6 @@
 local Library = {}
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 -- Styling (Accurate to Image)
@@ -38,7 +37,6 @@ function Library:Init(defaultKey)
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
-	-- Main Container
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Name = "Main"
 	mainFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -59,13 +57,6 @@ function Library:Init(defaultKey)
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
 
-	-- Blur Effect
-	local blur = Instance.new("BlurEffect")
-	blur.Size = 18
-	blur.Enabled = true
-	blur.Parent = Lighting
-	self.BlurObject = blur
-
 	-- Input Toggle
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
@@ -73,12 +64,10 @@ function Library:Init(defaultKey)
 		if not gpe and input.KeyCode == self.ToggleKey then
 			visible = not visible
 			mainFrame.Visible = visible
-			if self.BlurObject then self.BlurObject.Enabled = visible end
 		end
 	end)
 
 	self.Container = mainFrame
-    self.AccentObjects = {} -- Store for RGB
 	return self
 end
 
@@ -99,7 +88,6 @@ function Library:NewWindow(title, xOffset)
 	header.BackgroundColor3 = MAIN_COLOR
 	header.BorderSizePixel = 0
 	header.Parent = column
-    table.insert(self.AccentObjects, header)
 	
 	local headerTitle = Instance.new("TextLabel")
     headerTitle.Size = UDim2.new(1, 0, 1, 0)
@@ -137,28 +125,12 @@ function Library:NewWindow(title, xOffset)
 		local enabled = false
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
-            -- Toggle text color between White and the current Accent Color
-			btn.TextColor3 = enabled and header.BackgroundColor3 or TEXT_COLOR
+			btn.TextColor3 = enabled and MAIN_COLOR or TEXT_COLOR
 			callback(enabled)
 		end)
 	end
 
 	return window
-end
-
--- Smooth RGB Cycle Function
-function Library:EnableRGB()
-    task.spawn(function()
-        local h = 0
-        while task.wait() do
-            h = h + (1/300)
-            if h > 1 then h = 0 end
-            local color = Color3.fromHSV(h, 0.8, 1)
-            for _, obj in pairs(self.AccentObjects) do
-                obj.BackgroundColor3 = color
-            end
-        end
-    end)
 end
 
 return Library
