@@ -1,4 +1,4 @@
-local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tdyzy/Tdyyyz-UI-library/refs/heads/main/Library.lua"))()
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tdyzy/Ephemeral-UI-Library/refs/heads/main/Library.lua"))()
 
 local Main = Lib:Init(Enum.KeyCode.RightControl)
 
