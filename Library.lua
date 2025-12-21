@@ -1,116 +1,141 @@
--- Ephemeral variables
+-- Variables
 local Library = {}
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
--- Styling Constants
-local PURPLE_COLOR = Color3.fromRGB(130, 0, 255)
-local OFF_WHITE_COLOR = Color3.fromRGB(220, 220, 220)
-local BACKGROUND_COLOR = Color3.fromRGB(30, 30, 30)
-local UI_FONT = Enum.Font.SourceSansBold
+-- Styling (Accurate to Image)
+local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
+local MAIN_COLOR = Color3.fromRGB(130, 0, 255) -- The accent color
+local BG_TRANSPARENCY = 0.4 -- Accurate see-through look from image
+local FONT = Enum.Font.SourceSansBold
 
-function Library:Init(menuData, defaultKey)
+-- Dragging logic
+local function MakeDraggable(gui, handle)
+	local dragging, dragInput, dragStart, startPos
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = gui.Position
+		end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+	end)
+end
+
+function Library:Init(defaultKey)
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "Ephemeral_V2"
+	sg.Name = "Jailbreakhaxx_UI"
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
+	-- The Main Container (Screen Size to allow full movement)
 	local mainFrame = Instance.new("Frame")
-	mainFrame.Name = "MainContainer"
-	mainFrame.Size = UDim2.new(0, 800, 0, 300)
-	mainFrame.Position = UDim2.new(0.5, -400, 0.1, 0)
+	mainFrame.Name = "Main"
+	mainFrame.Size = UDim2.new(1, 0, 1, 0)
 	mainFrame.BackgroundTransparency = 1
 	mainFrame.Parent = sg
 
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.Padding = UDim.new(0, 6)
-	layout.Parent = mainFrame
-
-	-- Menu Toggle Logic
-	local toggleKey = defaultKey or Enum.KeyCode.RightControl
-	local visible = true
-	UIS.InputBegan:Connect(function(input, gpe)
-		if not gpe and input.KeyCode == toggleKey then
-			visible = not visible
-			mainFrame.Visible = visible
-		end
-	end)
-
-	-- Branding
+	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
-	brand.Text = "ephemeral"
-	brand.Font = UI_FONT
-	brand.TextSize = 40
-	brand.TextColor3 = PURPLE_COLOR
-	brand.Position = UDim2.new(0, 0, 0, -60)
-	brand.Size = UDim2.new(0, 200, 0, 50)
+	brand.Name = "Branding"
+	brand.Text = "Jailbreakhaxx <font color='#A0A0A0'>v2.0</font>"
+	brand.RichText = true
+	brand.Font = FONT
+	brand.TextSize = 26
+	brand.TextColor3 = MAIN_COLOR
+	brand.Position = UDim2.new(0, 15, 0, 15)
+	brand.Size = UDim2.new(0, 200, 0, 30)
 	brand.BackgroundTransparency = 1
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
 
-	-- Internal function to create columns
-	local function createColumn(data)
-		local columnBg = Instance.new("Frame")
-		columnBg.Name = data.Title .. "_Col"
-		columnBg.Size = UDim2.new(0, 140, 0, 0)
-		columnBg.AutomaticSize = Enum.AutomaticSize.Y
-		columnBg.BackgroundColor3 = BACKGROUND_COLOR
-		columnBg.BackgroundTransparency = 0.1
-		columnBg.BorderSizePixel = 0
-		columnBg.Parent = mainFrame
+	-- Blur Logic
+	local blur = Instance.new("BlurEffect")
+	blur.Size = 18
+	blur.Enabled = true
+	blur.Parent = Lighting
+	self.BlurObject = blur
 
-		local header = Instance.new("TextLabel")
-		header.Size = UDim2.new(1, 0, 0, 30)
-		header.BackgroundColor3 = PURPLE_COLOR
-		header.BorderSizePixel = 0
-		header.Text = data.Title:upper()
-		header.TextColor3 = Color3.new(1, 1, 1)
-		header.Font = UI_FONT
-		header.TextSize = 16
-		header.Parent = columnBg
-
-		local listContainer = Instance.new("Frame")
-		listContainer.Size = UDim2.new(1, 0, 0, 0)
-		listContainer.Position = UDim2.new(0, 0, 0, 30)
-		listContainer.AutomaticSize = Enum.AutomaticSize.Y
-		listContainer.BackgroundTransparency = 1
-		listContainer.Parent = columnBg
-
-		local vLayout = Instance.new("UIListLayout")
-		vLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		vLayout.Padding = UDim.new(0, 0)
-		vLayout.Parent = listContainer
-
-		for _, item in ipairs(data.Items) do
-			local btn = Instance.new("TextButton")
-			btn.Size = UDim2.new(1, 0, 0, 26)
-			btn.BackgroundTransparency = 1
-			btn.Text = "> " .. item.Name
-			btn.TextColor3 = OFF_WHITE_COLOR
-			btn.Font = UI_FONT
-			btn.TextSize = 14
-			btn.TextXAlignment = Enum.TextXAlignment.Left
-			btn.Parent = listContainer
-
-			local btnPadding = Instance.new("UIPadding")
-			btnPadding.PaddingLeft = UDim.new(0, 10)
-			btnPadding.Parent = btn
-
-			local toggled = false
-			btn.MouseButton1Click:Connect(function()
-				toggled = not toggled
-				btn.TextColor3 = toggled and PURPLE_COLOR or OFF_WHITE_COLOR
-				if item.Callback then item.Callback(toggled) end
-			end)
+	-- Input Toggle
+	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
+	local visible = true
+	UIS.InputBegan:Connect(function(input, gpe)
+		if not gpe and input.KeyCode == self.ToggleKey then
+			visible = not visible
+			mainFrame.Visible = visible
+			if self.BlurObject then self.BlurObject.Enabled = visible end
 		end
+	end)
+
+	self.Container = mainFrame
+	return self
+end
+
+function Library:NewWindow(title, xOffset)
+	local window = {}
+	local column = Instance.new("Frame")
+	column.Name = title
+	column.Size = UDim2.new(0, 140, 0, 0)
+	column.Position = UDim2.new(0, xOffset or 15, 0, 60)
+	column.AutomaticSize = Enum.AutomaticSize.Y
+	column.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	column.BackgroundTransparency = BG_TRANSPARENCY
+	column.BorderSizePixel = 0
+	column.Parent = self.Container
+
+	local header = Instance.new("TextLabel")
+	header.Size = UDim2.new(1, 0, 0, 26)
+	header.BackgroundColor3 = MAIN_COLOR
+	header.BorderSizePixel = 0
+	header.Text = title
+	header.TextColor3 = Color3.new(1, 1, 1)
+	header.Font = FONT
+	header.TextSize = 15
+	header.Parent = column
+	
+	MakeDraggable(column, header)
+
+	local list = Instance.new("Frame")
+	list.Size = UDim2.new(1, 0, 0, 0)
+	list.Position = UDim2.new(0, 0, 0, 26)
+	list.AutomaticSize = Enum.AutomaticSize.Y
+	list.BackgroundTransparency = 1
+	list.Parent = column
+    
+	local vLayout = Instance.new("UIListLayout")
+	vLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	vLayout.Parent = list
+
+	function window:AddToggle(text, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(1, 0, 0, 22)
+		btn.BackgroundTransparency = 1
+		btn.Text = "  > " .. text
+		btn.TextColor3 = TEXT_COLOR
+		btn.Font = FONT
+		btn.TextSize = 14
+		btn.TextXAlignment = Enum.TextXAlignment.Left
+		btn.Parent = list
+		
+		local enabled = false
+		btn.MouseButton1Click:Connect(function()
+			enabled = not enabled
+			btn.TextColor3 = enabled and MAIN_COLOR or TEXT_COLOR
+			callback(enabled)
+		end)
 	end
 
-	-- Build all columns
-	for _, data in ipairs(menuData) do
-		createColumn(data)
-	end
+	return window
 end
 
 return Library
