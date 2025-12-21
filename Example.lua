@@ -1,25 +1,37 @@
 local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tdyzy/Ephemeral-UI-Library/refs/heads/main/Library.lua"))()
 
--- Initialize with your toggle key
 local Main = Lib:Init(Enum.KeyCode.RightControl)
 
--- Create Windows side-by-side
-local Combat = Main:NewWindow("Combat", 20)
-Combat:AddToggle("KillAura", function(s) print("KillAura: ", s) end)
-Combat:AddToggle("Trigger Bot", function(s) print("Trigger: ", s) end)
-
+-- Movement Window
 local Movement = Main:NewWindow("Movement", 165)
-Movement:AddToggle("Speed", function(s) 
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s and 100 or 16 
-end)
-Movement:AddToggle("Super Jump", function(s) 
-    game.Players.LocalPlayer.Character.Humanoid.JumpPower = s and 150 or 50 
+
+-- WalkSpeed Toggle
+Movement:AddToggle("Speed", function(state)
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        if state then
+            character.Humanoid.WalkSpeed = 100 -- Fast speed
+        else
+            character.Humanoid.WalkSpeed = 16  -- Reset to default
+        end
+    end
 end)
 
-local Settings = Main:NewWindow("Settings", 310)
-Settings:AddToggle("Disable Blur", function(s)
-    Main.BlurObject.Enabled = not s
+-- JumpPower Toggle
+Movement:AddToggle("Super Jump", function(state)
+    local character = game.Players.LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.UseJumpPower = true -- Ensures JumpPower is used instead of Height
+        if state then
+            character.Humanoid.JumpPower = 150 -- High jump
+        else
+            character.Humanoid.JumpPower = 50  -- Reset to default
+        end
+    end
 end)
 
--- (Optional) Enable the smooth RGB color cycle like the photo
-Main:EnableRGB()
+-- Combat Window
+local Combat = Main:NewWindow("Combat", 20)
+Combat:AddToggle("KillAura", function(state)
+    print("KillAura is now: ", state)
+end)
