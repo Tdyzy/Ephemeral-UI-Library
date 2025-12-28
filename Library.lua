@@ -33,7 +33,7 @@ end
 
 function Library:Init(defaultKey)
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "Jailbreakhaxx_UI"
+	sg.Name = "Ephemeral"
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
@@ -46,7 +46,7 @@ function Library:Init(defaultKey)
 	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
 	brand.Name = "Branding"
-	brand.Text = "Jailbreakhaxx <font color='#A0A0A0'>v2.0</font>"
+	brand.Text = "Ephemeral <font color='#A0A0A0'>v2.0</font>"
 	brand.RichText = true
 	brand.Font = FONT
 	brand.TextSize = 26
@@ -111,6 +111,7 @@ function Library:NewWindow(title, xOffset)
 	vLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	vLayout.Parent = list
 
+	-- Toggle
 	function window:AddToggle(text, callback)
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(1, 0, 0, 22)
@@ -127,6 +128,29 @@ function Library:NewWindow(title, xOffset)
 			enabled = not enabled
 			btn.TextColor3 = enabled and MAIN_COLOR or TEXT_COLOR
 			callback(enabled)
+		end)
+	end
+
+	-- Button
+	function window:AddButton(text, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(1, 0, 0, 22)
+		btn.BackgroundTransparency = 1
+		btn.Text = "  > " .. text
+		btn.TextColor3 = TEXT_COLOR
+		btn.Font = FONT
+		btn.TextSize = 14
+		btn.TextXAlignment = Enum.TextXAlignment.Left
+		btn.Parent = list
+
+		btn.MouseButton1Click:Connect(function()
+			-- Flash Effect
+			btn.TextColor3 = MAIN_COLOR
+			task.delay(0.3, function()
+				btn.TextColor3 = TEXT_COLOR
+			end)
+			
+			callback()
 		end)
 	end
 
