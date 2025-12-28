@@ -46,7 +46,7 @@ function Library:Init(defaultKey)
 	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
 	brand.Name = "Branding"
-	brand.Text = "Ephemeral <font color='#A0A0A0'>v2.0</font>"
+	brand.Text = "Ephemeral <font color='#A0A0A0'>Jailbreak 2017[Beta] v1.0</font>"
 	brand.RichText = true
 	brand.Font = FONT
 	brand.TextSize = 26
