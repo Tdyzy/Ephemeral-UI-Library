@@ -4,11 +4,16 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
--- Styling (Accurate to Image)
+-- Styling
 local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
 local MAIN_COLOR = Color3.fromRGB(130, 0, 255) 
 local BG_TRANSPARENCY = 0.4 
 local FONT = Enum.Font.SourceSansBold
+
+-- Rainbow Logic Variables
+Library.AccentObjects = {}
+Library.RainbowActive = false
+Library.CurrentColor = MAIN_COLOR
 
 -- Dragging logic
 local function MakeDraggable(gui, handle)
@@ -31,9 +36,29 @@ local function MakeDraggable(gui, handle)
 	end)
 end
 
+-- Rainbow Loop Task
+task.spawn(function()
+    local hue = 0
+    while task.wait() do
+        if Library.RainbowActive then
+            hue = hue + (1/300) -- Speed of rainbow
+            if hue > 1 then hue = 0 end
+            Library.CurrentColor = Color3.fromHSV(hue, 0.8, 1)
+            
+            for obj, isText in pairs(Library.AccentObjects) do
+                if isText then
+                    obj.TextColor3 = Library.CurrentColor
+                else
+                    obj.BackgroundColor3 = Library.CurrentColor
+                end
+            end
+        end
+    end
+end)
+
 function Library:Init(defaultKey)
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "Ephemeral"
+	sg.Name = "Jailbreakhaxx_UI"
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
@@ -43,11 +68,9 @@ function Library:Init(defaultKey)
 	mainFrame.BackgroundTransparency = 1
 	mainFrame.Parent = sg
 
-	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
-	brand.Name = "Branding"
-	brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
 	brand.RichText = true
+	brand.Text = "Jailbreakhaxx <font color='#A0A0A0'>v2.0</font>"
 	brand.Font = FONT
 	brand.TextSize = 26
 	brand.TextColor3 = MAIN_COLOR
@@ -56,8 +79,10 @@ function Library:Init(defaultKey)
 	brand.BackgroundTransparency = 1
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
+    
+    -- Track branding for rainbow
+    Library.AccentObjects[brand] = true
 
-	-- Input Toggle
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
 	local visible = true
 	UIS.InputBegan:Connect(function(input, gpe)
@@ -74,7 +99,6 @@ end
 function Library:NewWindow(title, xOffset)
 	local window = {}
 	local column = Instance.new("Frame")
-	column.Name = title
 	column.Size = UDim2.new(0, 140, 0, 0)
 	column.Position = UDim2.new(0, xOffset or 15, 0, 60)
 	column.AutomaticSize = Enum.AutomaticSize.Y
@@ -88,6 +112,7 @@ function Library:NewWindow(title, xOffset)
 	header.BackgroundColor3 = MAIN_COLOR
 	header.BorderSizePixel = 0
 	header.Parent = column
+    Library.AccentObjects[header] = false -- Add header to rainbow
 	
 	local headerTitle = Instance.new("TextLabel")
     headerTitle.Size = UDim2.new(1, 0, 1, 0)
@@ -111,7 +136,6 @@ function Library:NewWindow(title, xOffset)
 	vLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	vLayout.Parent = list
 
-	-- Toggle
 	function window:AddToggle(text, callback)
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(1, 0, 0, 22)
@@ -126,13 +150,18 @@ function Library:NewWindow(title, xOffset)
 		local enabled = false
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
-			btn.TextColor3 = enabled and MAIN_COLOR or TEXT_COLOR
+			if enabled then
+                btn.TextColor3 = Library.CurrentColor
+                Library.AccentObjects[btn] = true -- Start tracking color
+            else
+                Library.AccentObjects[btn] = nil -- Stop tracking
+                btn.TextColor3 = TEXT_COLOR
+            end
 			callback(enabled)
 		end)
 	end
 
-	-- Button
-	function window:AddButton(text, callback)
+    function window:AddButton(text, callback)
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(1, 0, 0, 22)
 		btn.BackgroundTransparency = 1
@@ -144,17 +173,32 @@ function Library:NewWindow(title, xOffset)
 		btn.Parent = list
 
 		btn.MouseButton1Click:Connect(function()
-			-- Flash Effect
-			btn.TextColor3 = MAIN_COLOR
+			btn.TextColor3 = Library.CurrentColor
 			task.delay(0.3, function()
 				btn.TextColor3 = TEXT_COLOR
 			end)
-			
 			callback()
 		end)
 	end
 
 	return window
+end
+
+function Library:SetRainbow(state)
+    Library.RainbowActive = state
+    if not state then
+        -- Reset all objects to default Purple if turned off
+        for obj, isText in pairs(Library.AccentObjects) do
+            if isText then
+                -- Only reset if it's the branding or an active toggle
+                if obj.Name == "Branding" then
+                    obj.TextColor3 = MAIN_COLOR
+                end
+            else
+                obj.BackgroundColor3 = MAIN_COLOR
+            end
+        end
+    end
 end
 
 return Library
