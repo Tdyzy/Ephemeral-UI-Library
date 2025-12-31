@@ -70,7 +70,7 @@ function Library:Init(defaultKey)
 
 	local brand = Instance.new("TextLabel")
 	brand.RichText = true
-	brand.Text = "Jailbreakhaxx <font color='#A0A0A0'>v2.0</font>"
+	brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
 	brand.Font = FONT
 	brand.TextSize = 26
 	brand.TextColor3 = MAIN_COLOR
