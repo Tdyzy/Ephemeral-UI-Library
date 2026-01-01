@@ -6,15 +6,15 @@ local player = Players.LocalPlayer
 
 -- Styling
 local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
-local MAIN_COLOR = Color3.fromRGB(130, 0, 255) 
+local MAIN_COLOR = Color3.fromRGB(130, 0, 255) -- Your Purple
 local BG_TRANSPARENCY = 0.4 
 local FONT = Enum.Font.SourceSansBold
 
 -- Rainbow Logic Variables
-Library.AccentObjects = {} -- Stores [Object] = isText (bool)
+Library.AccentObjects = {} 
 Library.RainbowActive = false
 Library.CurrentColor = MAIN_COLOR
-Library.BrandingLabel = nil -- Store reference to fix the color bug
+Library.BrandingLabel = nil 
 
 -- Dragging logic
 local function MakeDraggable(gui, handle)
@@ -40,9 +40,10 @@ end
 -- Global Rainbow Loop
 task.spawn(function()
     local hue = 0
-    while task.wait() do
+    while true do
+        task.wait()
         if Library.RainbowActive then
-            hue = hue + (1/400) -- Speed of cycle
+            hue = hue + (1/400) 
             if hue > 1 then hue = 0 end
             Library.CurrentColor = Color3.fromHSV(hue, 0.7, 1)
             
@@ -83,7 +84,7 @@ function Library:Init(defaultKey)
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
     
-    -- Track branding reference and add to rainbow
+    -- Assign reference and track it
     Library.BrandingLabel = brand
     Library.AccentObjects[brand] = true
 
@@ -116,7 +117,7 @@ function Library:NewWindow(title, xOffset)
 	header.BackgroundColor3 = MAIN_COLOR
 	header.BorderSizePixel = 0
 	header.Parent = column
-    Library.AccentObjects[header] = false -- Add to rainbow (Background)
+    Library.AccentObjects[header] = false 
 	
 	local headerTitle = Instance.new("TextLabel")
     headerTitle.Size = UDim2.new(1, 0, 1, 0)
@@ -155,6 +156,7 @@ function Library:NewWindow(title, xOffset)
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
 			if enabled then
+                -- Color it rainbow if active, otherwise purple
                 btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
                 Library.AccentObjects[btn] = true
             else
@@ -188,23 +190,26 @@ function Library:NewWindow(title, xOffset)
 	return window
 end
 
--- The new function to handle the Rainbowify toggle
+-- NEW REVERT LOGIC
 function Library:SetRainbow(state)
     Library.RainbowActive = state
+    
     if not state then
-        -- RESET LOGIC
-        -- 1. Reset branding specifically
+        -- We give it a tiny delay to ensure the Loop has stopped its last 'wait()'
+        task.wait(0.05) 
+        
+        -- Force branding back to Purple
         if Library.BrandingLabel then
             Library.BrandingLabel.TextColor3 = MAIN_COLOR
         end
         
-        -- 2. Reset all other tracked objects
+        -- Reset everything else
         for obj, isText in pairs(Library.AccentObjects) do
             if isText then
-                -- If it's a button and turned on, it should be Purple. Branding handled above.
+                -- Active toggles back to Purple
                 obj.TextColor3 = MAIN_COLOR
             else
-                -- Headers go back to Purple
+                -- Headers back to Purple
                 obj.BackgroundColor3 = MAIN_COLOR
             end
         end
