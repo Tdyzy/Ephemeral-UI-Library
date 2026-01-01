@@ -11,9 +11,10 @@ local BG_TRANSPARENCY = 0.4
 local FONT = Enum.Font.SourceSansBold
 
 -- Rainbow Logic Variables
-Library.AccentObjects = {}
+Library.AccentObjects = {} -- Stores [Object] = isText (bool)
 Library.RainbowActive = false
 Library.CurrentColor = MAIN_COLOR
+Library.BrandingLabel = nil -- Store reference to fix the color bug
 
 -- Dragging logic
 local function MakeDraggable(gui, handle)
@@ -36,14 +37,14 @@ local function MakeDraggable(gui, handle)
 	end)
 end
 
--- Rainbow Loop Task
+-- Global Rainbow Loop
 task.spawn(function()
     local hue = 0
     while task.wait() do
         if Library.RainbowActive then
-            hue = hue + (1/300) -- Speed of rainbow
+            hue = hue + (1/400) -- Speed of cycle
             if hue > 1 then hue = 0 end
-            Library.CurrentColor = Color3.fromHSV(hue, 0.8, 1)
+            Library.CurrentColor = Color3.fromHSV(hue, 0.7, 1)
             
             for obj, isText in pairs(Library.AccentObjects) do
                 if isText then
@@ -58,7 +59,7 @@ end)
 
 function Library:Init(defaultKey)
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "Jailbreakhaxx_UI"
+	sg.Name = "Ephemeral_UI"
 	sg.ResetOnSpawn = false
 	sg.Parent = player:WaitForChild("PlayerGui")
 
@@ -68,9 +69,11 @@ function Library:Init(defaultKey)
 	mainFrame.BackgroundTransparency = 1
 	mainFrame.Parent = sg
 
+	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
-	brand.RichText = true
+	brand.Name = "Branding"
 	brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
+	brand.RichText = true
 	brand.Font = FONT
 	brand.TextSize = 26
 	brand.TextColor3 = MAIN_COLOR
@@ -80,7 +83,8 @@ function Library:Init(defaultKey)
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
     
-    -- Track branding for rainbow
+    -- Track branding reference and add to rainbow
+    Library.BrandingLabel = brand
     Library.AccentObjects[brand] = true
 
 	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
@@ -112,7 +116,7 @@ function Library:NewWindow(title, xOffset)
 	header.BackgroundColor3 = MAIN_COLOR
 	header.BorderSizePixel = 0
 	header.Parent = column
-    Library.AccentObjects[header] = false -- Add header to rainbow
+    Library.AccentObjects[header] = false -- Add to rainbow (Background)
 	
 	local headerTitle = Instance.new("TextLabel")
     headerTitle.Size = UDim2.new(1, 0, 1, 0)
@@ -151,17 +155,17 @@ function Library:NewWindow(title, xOffset)
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
 			if enabled then
-                btn.TextColor3 = Library.CurrentColor
-                Library.AccentObjects[btn] = true -- Start tracking color
+                btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
+                Library.AccentObjects[btn] = true
             else
-                Library.AccentObjects[btn] = nil -- Stop tracking
+                Library.AccentObjects[btn] = nil
                 btn.TextColor3 = TEXT_COLOR
             end
 			callback(enabled)
 		end)
 	end
 
-    function window:AddButton(text, callback)
+	function window:AddButton(text, callback)
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(1, 0, 0, 22)
 		btn.BackgroundTransparency = 1
@@ -184,17 +188,23 @@ function Library:NewWindow(title, xOffset)
 	return window
 end
 
+-- The new function to handle the Rainbowify toggle
 function Library:SetRainbow(state)
     Library.RainbowActive = state
     if not state then
-        -- Reset all objects to default Purple if turned off
+        -- RESET LOGIC
+        -- 1. Reset branding specifically
+        if Library.BrandingLabel then
+            Library.BrandingLabel.TextColor3 = MAIN_COLOR
+        end
+        
+        -- 2. Reset all other tracked objects
         for obj, isText in pairs(Library.AccentObjects) do
             if isText then
-                -- Only reset if it's the branding or an active toggle
-                if obj.Name == "Branding" then
-                    obj.TextColor3 = MAIN_COLOR
-                end
+                -- If it's a button and turned on, it should be Purple. Branding handled above.
+                obj.TextColor3 = MAIN_COLOR
             else
+                -- Headers go back to Purple
                 obj.BackgroundColor3 = MAIN_COLOR
             end
         end
