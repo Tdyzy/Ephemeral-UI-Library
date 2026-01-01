@@ -6,12 +6,13 @@ local player = Players.LocalPlayer
 
 -- Styling
 local TEXT_COLOR = Color3.fromRGB(255, 255, 255)
-local MAIN_COLOR = Color3.fromRGB(130, 0, 255) -- Your Purple
-local BG_TRANSPARENCY = 0.4 
+local MAIN_COLOR = Color3.fromRGB(130, 0, 255) 
+local DEFAULT_TRANSPARENCY = 0.4 
 local FONT = Enum.Font.SourceSansBold
 
--- Rainbow Logic Variables
+-- Tracking Tables
 Library.AccentObjects = {} 
+Library.WindowFrames = {} -- Tracks all windows for the Opaque toggle
 Library.RainbowActive = false
 Library.CurrentColor = MAIN_COLOR
 Library.BrandingLabel = nil 
@@ -70,7 +71,6 @@ function Library:Init(defaultKey)
 	mainFrame.BackgroundTransparency = 1
 	mainFrame.Parent = sg
 
-	-- Branding (Top Left)
 	local brand = Instance.new("TextLabel")
 	brand.Name = "Branding"
 	brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
@@ -84,7 +84,6 @@ function Library:Init(defaultKey)
 	brand.TextXAlignment = Enum.TextXAlignment.Left
 	brand.Parent = mainFrame
     
-    -- Assign reference and track it
     Library.BrandingLabel = brand
     Library.AccentObjects[brand] = true
 
@@ -108,9 +107,11 @@ function Library:NewWindow(title, xOffset)
 	column.Position = UDim2.new(0, xOffset or 15, 0, 60)
 	column.AutomaticSize = Enum.AutomaticSize.Y
 	column.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	column.BackgroundTransparency = BG_TRANSPARENCY
+	column.BackgroundTransparency = DEFAULT_TRANSPARENCY
 	column.BorderSizePixel = 0
 	column.Parent = self.Container
+    
+    table.insert(Library.WindowFrames, column) -- Store for Opaque toggle
 
 	local header = Instance.new("Frame")
 	header.Size = UDim2.new(1, 0, 0, 26)
@@ -137,9 +138,7 @@ function Library:NewWindow(title, xOffset)
 	list.BackgroundTransparency = 1
 	list.Parent = column
     
-	local vLayout = Instance.new("UIListLayout")
-	vLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	vLayout.Parent = list
+	Instance.new("UIListLayout", list).SortOrder = Enum.SortOrder.LayoutOrder
 
 	function window:AddToggle(text, callback)
 		local btn = Instance.new("TextButton")
@@ -156,7 +155,6 @@ function Library:NewWindow(title, xOffset)
 		btn.MouseButton1Click:Connect(function()
 			enabled = not enabled
 			if enabled then
-                -- Color it rainbow if active, otherwise purple
                 btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
                 Library.AccentObjects[btn] = true
             else
@@ -179,7 +177,8 @@ function Library:NewWindow(title, xOffset)
 		btn.Parent = list
 
 		btn.MouseButton1Click:Connect(function()
-			btn.TextColor3 = Library.CurrentColor
+			-- Flash logic fixed: use current color if rainbow is on, otherwise use purple
+			btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
 			task.delay(0.3, function()
 				btn.TextColor3 = TEXT_COLOR
 			end)
@@ -190,29 +189,26 @@ function Library:NewWindow(title, xOffset)
 	return window
 end
 
--- NEW REVERT LOGIC
 function Library:SetRainbow(state)
     Library.RainbowActive = state
-    
     if not state then
-        -- We give it a tiny delay to ensure the Loop has stopped its last 'wait()'
         task.wait(0.05) 
-        
-        -- Force branding back to Purple
-        if Library.BrandingLabel then
-            Library.BrandingLabel.TextColor3 = MAIN_COLOR
-        end
-        
-        -- Reset everything else
+        if Library.BrandingLabel then Library.BrandingLabel.TextColor3 = MAIN_COLOR end
         for obj, isText in pairs(Library.AccentObjects) do
             if isText then
-                -- Active toggles back to Purple
                 obj.TextColor3 = MAIN_COLOR
             else
-                -- Headers back to Purple
                 obj.BackgroundColor3 = MAIN_COLOR
             end
         end
+    end
+end
+
+-- NEW OPAQUE LOGIC
+function Library:SetOpaque(state)
+    local targetTransparency = state and 0 or DEFAULT_TRANSPARENCY
+    for _, frame in pairs(Library.WindowFrames) do
+        frame.BackgroundTransparency = targetTransparency
     end
 end
 
