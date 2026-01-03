@@ -275,6 +275,67 @@ function window:AddSlider(text, min, max, default, callback)
     end)
 end
 
+function window:AddDropdown(text, list_items, callback)
+        local dropdown = {}
+        local expanded = false
+        
+        local dropFrame = Instance.new("Frame")
+        dropFrame.Size = UDim2.new(1, 0, 0, 22)
+        dropFrame.BackgroundTransparency = 1
+        dropFrame.ClipsDescendants = true -- Hide the list when not expanded
+        dropFrame.Parent = list
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 0, 22)
+        btn.BackgroundTransparency = 1
+        btn.Text = "  > " .. text .. ": ..."
+        btn.TextColor3 = TEXT_COLOR
+        btn.Font = FONT
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = dropFrame
+
+        local optionList = Instance.new("Frame")
+        optionList.Size = UDim2.new(1, 0, 0, 0)
+        optionList.Position = UDim2.new(0, 0, 0, 22)
+        optionList.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        optionList.BorderSizePixel = 0
+        optionList.Parent = dropFrame
+        
+        local layout = Instance.new("UIListLayout", optionList)
+        
+        local function toggle()
+            expanded = not expanded
+            dropFrame.Size = UDim2.new(1, 0, 0, expanded and (22 + (#list_items * 20)) or 22)
+            optionList.Size = UDim2.new(1, 0, 0, expanded and (#list_items * 20) or 0)
+        end
+
+        btn.MouseButton1Click:Connect(toggle)
+
+        for _, item in pairs(list_items) do
+            local opt = Instance.new("TextButton")
+            opt.Size = UDim2.new(1, 0, 0, 20)
+            opt.BackgroundTransparency = 1
+            opt.Text = tostring(item)
+            opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+            opt.Font = FONT
+            opt.TextSize = 13
+            opt.Parent = optionList
+
+            opt.MouseButton1Click:Connect(function()
+                btn.Text = "  > " .. text .. ": " .. item
+                toggle()
+                callback(item)
+            end)
+            
+            -- Hover effect
+            opt.MouseEnter:Connect(function() opt.TextColor3 = Library.CurrentColor end)
+            opt.MouseLeave:Connect(function() opt.TextColor3 = Color3.fromRGB(200, 200, 200) end)
+        end
+        
+        return dropdown
+    end
+    --maybe error
     return window
 end
 
