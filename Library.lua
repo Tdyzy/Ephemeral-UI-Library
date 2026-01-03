@@ -274,6 +274,8 @@ function window:AddSlider(text, min, max, default, callback)
         end
     end)
 end
+    return window
+end
 
 function window:AddDropdown(text, list_items, callback)
         local dropdown = {}
@@ -336,8 +338,51 @@ function window:AddDropdown(text, list_items, callback)
         return dropdown
     end
     --maybe error
-    return window
+
+function window:AddKeybind(text, default, callback)
+    local keybind = {}
+    local currentKey = default or Enum.KeyCode.F
+    local binding = false
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 22)
+    btn.BackgroundTransparency = 1
+    btn.Text = "  > " .. text .. ": " .. currentKey.Name
+    btn.TextColor3 = TEXT_COLOR
+    btn.Font = FONT
+    btn.TextSize = 14
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Parent = list
+
+    -- The "Listening" Logic
+    btn.MouseButton1Click:Connect(function()
+        binding = true
+        btn.Text = "  > " .. text .. ": ..."
+        btn.TextColor3 = Library.CurrentColor
+    end)
+
+    UIS.InputBegan:Connect(function(input, gpe)
+        if gpe then return end -- Don't trigger if typing in chat
+        
+        if binding then
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                currentKey = input.KeyCode
+                binding = false
+                btn.Text = "  > " .. text .. ": " .. currentKey.Name
+                btn.TextColor3 = TEXT_COLOR
+            end
+        else
+            -- Check if the pressed key matches the set keybind
+            if input.KeyCode == currentKey then
+                callback()
+            end
+        end
+    end)
+
+    return keybind
 end
+
+
 
 function Library:SetRainbow(state)
     Library.RainbowActive = state
