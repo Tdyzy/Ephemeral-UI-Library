@@ -153,7 +153,7 @@ function Library:NewWindow(title, xOffset)
     
     Instance.new("UIListLayout", list).SortOrder = Enum.SortOrder.LayoutOrder
 
-    --- --- WINDOW FUNCTIONS --- ---
+    -- --- WINDOW METHODS ---
 
     function window:AddToggle(text, callback)
         local btn = Instance.new("TextButton")
@@ -349,7 +349,7 @@ function Library:NewWindow(title, xOffset)
         end)
     end
 
-    return window -- Correct placement to return the window with all methods
+    return window -- THIS WAS THE FIX: Returns the window AFTER adding all methods
 end
 
 function Library:SetRainbow(state)
