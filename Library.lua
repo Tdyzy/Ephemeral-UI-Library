@@ -202,7 +202,7 @@ function Library:NewWindow(title, xOffset)
 
 function window:AddSlider(text, min, max, default, callback)
     local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 38)
+    sliderFrame.Size = UDim2.new(1, 0, 0, 45) -- Increased frame height
     sliderFrame.BackgroundTransparency = 1
     sliderFrame.Parent = list
 
@@ -216,20 +216,43 @@ function window:AddSlider(text, min, max, default, callback)
     label.BackgroundTransparency = 1
     label.Parent = sliderFrame
 
+    -- The "Gutter" (The background of the slider)
     local bg = Instance.new("Frame")
-    -- Increased width from 0.9 to 0.95 and adjusted X position to 0.025 to keep it centered
-    bg.Size = UDim2.new(0.95, 0, 0, 4)
-    bg.Position = UDim2.new(0.025, 0, 0.7, 0)
-    bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    bg.Size = UDim2.new(0.9, 0, 0, 8) -- Increased thickness from 4 to 8
+    bg.Position = UDim2.new(0.05, 0, 0.65, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     bg.BorderSizePixel = 0
     bg.Parent = sliderFrame
+    
+    -- Rounded corners for the bar
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = bg
 
+    -- The progress fill
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
     fill.BackgroundColor3 = MAIN_COLOR
     fill.BorderSizePixel = 0
     fill.Parent = bg
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 4)
+    fillCorner.Parent = fill
+    
     Library.AccentObjects[fill] = false
+
+    -- The "Knob" (Easier to see and click)
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 12, 0, 12)
+    knob.Position = UDim2.new(1, -6, 0.5, -6)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    knob.Parent = fill
+    
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
 
     local function update()
         local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
@@ -239,7 +262,8 @@ function window:AddSlider(text, min, max, default, callback)
         callback(value)
     end
 
-    bg.InputBegan:Connect(function(input)
+    -- Improved Click Detection (Checks the whole frame, not just the tiny bar)
+    sliderFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             local conn
             conn = RunService.RenderStepped:Connect(function()
