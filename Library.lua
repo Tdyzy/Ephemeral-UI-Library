@@ -18,6 +18,7 @@ Library.CurrentColor = MAIN_COLOR
 Library.BrandingLabel = nil 
 
 -- --- AUTO-RELOAD LOGIC ---
+-- Deletes the old UI if you execute the script again
 if _G.Ephemeral_Cleanup then
     _G.Ephemeral_Cleanup()
 end
@@ -102,6 +103,7 @@ function Library:Init(defaultKey)
         end
     end)
 
+    -- Set Cleanup Function
     _G.Ephemeral_Cleanup = function()
         inputConn:Disconnect()
         sg:Destroy()
@@ -153,8 +155,6 @@ function Library:NewWindow(title, xOffset)
     
     Instance.new("UIListLayout", list).SortOrder = Enum.SortOrder.LayoutOrder
 
-    -- --- WINDOW METHODS ---
-
     function window:AddToggle(text, callback)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 22)
@@ -200,156 +200,82 @@ function Library:NewWindow(title, xOffset)
         end)
     end
 
-    function window:AddSlider(text, min, max, default, callback)
-        local sliderFrame = Instance.new("Frame")
-        sliderFrame.Size = UDim2.new(1, 0, 0, 45) 
-        sliderFrame.BackgroundTransparency = 1
-        sliderFrame.Parent = list
+function window:AddSlider(text, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(1, 0, 0, 45) 
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Parent = list
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 22)
-        label.Text = "  > " .. text .. ": " .. default
-        label.TextColor3 = TEXT_COLOR
-        label.Font = FONT
-        label.TextSize = 14
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.BackgroundTransparency = 1
-        label.Parent = sliderFrame
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 22) -- Match button height
+    label.Text = "  > " .. text .. ": " .. default -- Added "> " prefix
+    label.TextColor3 = TEXT_COLOR
+    label.Font = FONT
+    label.TextSize = 14 -- Matched to Buttons/Toggles
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Parent = sliderFrame
 
-        local bg = Instance.new("Frame")
-        bg.Size = UDim2.new(0.85, 0, 0, 8)
-        bg.Position = UDim2.new(0.07, 0, 0.7, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        bg.BorderSizePixel = 0
-        bg.Parent = sliderFrame
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 4)
-        corner.Parent = bg
+    -- The Gutter (Background bar)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(0.85, 0, 0, 8) -- Fatter bar
+    bg.Position = UDim2.new(0.07, 0, 0.7, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    bg.BorderSizePixel = 0
+    bg.Parent = sliderFrame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = bg
 
-        local fill = Instance.new("Frame")
-        fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = MAIN_COLOR
-        fill.BorderSizePixel = 0
-        fill.Parent = bg
-        
-        local fillCorner = Instance.new("UICorner")
-        fillCorner.CornerRadius = UDim.new(0, 4)
-        fillCorner.Parent = fill
-        Library.AccentObjects[fill] = false
+    -- The progress fill
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
+    fill.BackgroundColor3 = MAIN_COLOR
+    fill.BorderSizePixel = 0
+    fill.Parent = bg
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 4)
+    fillCorner.Parent = fill
+    
+    Library.AccentObjects[fill] = false
 
-        local function update()
-            local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
-            local value = math.floor(min + (max - min) * percent)
-            fill.Size = UDim2.new(percent, 0, 1, 0)
-            label.Text = "  > " .. text .. ": " .. value
-            callback(value)
-        end
+    -- The Knob
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 12, 0, 12)
+    knob.Position = UDim2.new(1, -6, 0.5, -6)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    knob.Parent = fill
+    
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
 
-        sliderFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local conn
-                conn = RunService.RenderStepped:Connect(function()
-                    if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                        conn:Disconnect()
-                        return
-                    end
-                    update()
-                end)
-            end
-        end)
+    local function update()
+        local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * percent)
+        fill.Size = UDim2.new(percent, 0, 1, 0)
+        label.Text = "  > " .. text .. ": " .. value
+        callback(value)
     end
 
-    function window:AddDropdown(text, list_items, callback)
-        local expanded = false
-        local dropFrame = Instance.new("Frame")
-        dropFrame.Size = UDim2.new(1, 0, 0, 22)
-        dropFrame.BackgroundTransparency = 1
-        dropFrame.ClipsDescendants = true
-        dropFrame.Parent = list
-
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 22)
-        btn.BackgroundTransparency = 1
-        btn.Text = "  > " .. text .. ": ..."
-        btn.TextColor3 = TEXT_COLOR
-        btn.Font = FONT
-        btn.TextSize = 14
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = dropFrame
-
-        local optionList = Instance.new("Frame")
-        optionList.Size = UDim2.new(1, 0, 0, 0)
-        optionList.Position = UDim2.new(0, 0, 0, 22)
-        optionList.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        optionList.BorderSizePixel = 0
-        optionList.Parent = dropFrame
-        Instance.new("UIListLayout", optionList)
-        
-        local function toggle()
-            expanded = not expanded
-            dropFrame.Size = UDim2.new(1, 0, 0, expanded and (22 + (#list_items * 20)) or 22)
-            optionList.Size = UDim2.new(1, 0, 0, expanded and (#list_items * 20) or 0)
-        end
-
-        btn.MouseButton1Click:Connect(toggle)
-
-        for _, item in pairs(list_items) do
-            local opt = Instance.new("TextButton")
-            opt.Size = UDim2.new(1, 0, 0, 20)
-            opt.BackgroundTransparency = 1
-            opt.Text = tostring(item)
-            opt.TextColor3 = Color3.fromRGB(200, 200, 200)
-            opt.Font = FONT
-            opt.TextSize = 13
-            opt.Parent = optionList
-
-            opt.MouseButton1Click:Connect(function()
-                btn.Text = "  > " .. text .. ": " .. item
-                toggle()
-                callback(item)
+    sliderFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local conn
+            conn = RunService.RenderStepped:Connect(function()
+                if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                    conn:Disconnect()
+                    return
+                end
+                update()
             end)
         end
-    end
+    end)
+end
 
-    function window:AddKeybind(text, default, callback)
-        local currentKey = default or Enum.KeyCode.F
-        local binding = false
-
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 22)
-        btn.BackgroundTransparency = 1
-        btn.Text = "  > " .. text .. ": " .. currentKey.Name
-        btn.TextColor3 = TEXT_COLOR
-        btn.Font = FONT
-        btn.TextSize = 14
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = list
-
-        btn.MouseButton1Click:Connect(function()
-            binding = true
-            btn.Text = "  > " .. text .. ": ..."
-            btn.TextColor3 = Library.CurrentColor
-        end)
-
-        UIS.InputBegan:Connect(function(input, gpe)
-            if gpe then return end
-            if binding then
-                if input.UserInputType == Enum.UserInputType.Keyboard then
-                    currentKey = input.KeyCode
-                    binding = false
-                    btn.Text = "  > " .. text .. ": " .. currentKey.Name
-                    btn.TextColor3 = TEXT_COLOR
-                end
-            else
-                if input.KeyCode == currentKey then
-                    callback()
-                end
-            end
-        end)
-    end
-
-    return window -- THIS WAS THE FIX: Returns the window AFTER adding all methods
+    return window
 end
 
 function Library:SetRainbow(state)
