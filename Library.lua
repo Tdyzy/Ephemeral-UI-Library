@@ -200,57 +200,58 @@ function Library:NewWindow(title, xOffset)
         end)
     end
 
-    function window:AddSlider(text, min, max, default, callback)
-        local sliderFrame = Instance.new("Frame")
-        sliderFrame.Size = UDim2.new(1, 0, 0, 38)
-        sliderFrame.BackgroundTransparency = 1
-        sliderFrame.Parent = list
+function window:AddSlider(text, min, max, default, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(1, 0, 0, 38)
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Parent = list
 
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 0, 20)
-        label.Text = "  " .. text .. ": " .. default
-        label.TextColor3 = TEXT_COLOR
-        label.Font = FONT
-        label.TextSize = 12
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.BackgroundTransparency = 1
-        label.Parent = sliderFrame
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Text = "  " .. text .. ": " .. default
+    label.TextColor3 = TEXT_COLOR
+    label.Font = FONT
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Parent = sliderFrame
 
-        local bg = Instance.new("Frame")
-        bg.Size = UDim2.new(0.9, 0, 0, 4)
-        bg.Position = UDim2.new(0.05, 0, 0.7, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        bg.BorderSizePixel = 0
-        bg.Parent = sliderFrame
+    local bg = Instance.new("Frame")
+    -- Increased width from 0.9 to 0.95 and adjusted X position to 0.025 to keep it centered
+    bg.Size = UDim2.new(0.95, 0, 0, 4)
+    bg.Position = UDim2.new(0.025, 0, 0.7, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    bg.BorderSizePixel = 0
+    bg.Parent = sliderFrame
 
-        local fill = Instance.new("Frame")
-        fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
-        fill.BackgroundColor3 = MAIN_COLOR
-        fill.BorderSizePixel = 0
-        fill.Parent = bg
-        Library.AccentObjects[fill] = false
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
+    fill.BackgroundColor3 = MAIN_COLOR
+    fill.BorderSizePixel = 0
+    fill.Parent = bg
+    Library.AccentObjects[fill] = false
 
-        local function update()
-            local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
-            local value = math.floor(min + (max - min) * percent)
-            fill.Size = UDim2.new(percent, 0, 1, 0)
-            label.Text = "  " .. text .. ": " .. value
-            callback(value)
-        end
-
-        bg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local conn
-                conn = RunService.RenderStepped:Connect(function()
-                    if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                        conn:Disconnect()
-                        return
-                    end
-                    update()
-                end)
-            end
-        end)
+    local function update()
+        local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * percent)
+        fill.Size = UDim2.new(percent, 0, 1, 0)
+        label.Text = "  " .. text .. ": " .. value
+        callback(value)
     end
+
+    bg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local conn
+            conn = RunService.RenderStepped:Connect(function()
+                if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                    conn:Disconnect()
+                    return
+                end
+                update()
+            end)
+        end
+    end)
+end
 
     return window
 end
