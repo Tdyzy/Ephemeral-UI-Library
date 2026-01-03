@@ -1,7 +1,7 @@
--- Variables
 local Library = {}
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- Styling
@@ -12,30 +12,36 @@ local FONT = Enum.Font.SourceSansBold
 
 -- Tracking Tables
 Library.AccentObjects = {} 
-Library.WindowFrames = {} -- Tracks all windows for the Opaque toggle
+Library.WindowFrames = {}
 Library.RainbowActive = false
 Library.CurrentColor = MAIN_COLOR
 Library.BrandingLabel = nil 
 
+-- --- AUTO-RELOAD LOGIC ---
+-- Deletes the old UI if you execute the script again
+if _G.Ephemeral_Cleanup then
+    _G.Ephemeral_Cleanup()
+end
+
 -- Dragging logic
 local function MakeDraggable(gui, handle)
-	local dragging, dragInput, dragStart, startPos
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = gui.Position
-		end
-	end)
-	UIS.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - dragStart
-			gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-		end
-	end)
-	UIS.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-	end)
+    local dragging, dragInput, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
 end
 
 -- Global Rainbow Loop
@@ -60,67 +66,76 @@ task.spawn(function()
 end)
 
 function Library:Init(defaultKey)
-	local sg = Instance.new("ScreenGui")
-	sg.Name = "Ephemeral_UI"
-	sg.ResetOnSpawn = false
-	sg.Parent = player:WaitForChild("PlayerGui")
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "Ephemeral_UI"
+    sg.ResetOnSpawn = false
+    sg.Parent = player:WaitForChild("PlayerGui")
+    self.ScreenGui = sg
 
-	local mainFrame = Instance.new("Frame")
-	mainFrame.Name = "Main"
-	mainFrame.Size = UDim2.new(1, 0, 1, 0)
-	mainFrame.BackgroundTransparency = 1
-	mainFrame.Parent = sg
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "Main"
+    mainFrame.Size = UDim2.new(1, 0, 1, 0)
+    mainFrame.BackgroundTransparency = 1
+    mainFrame.Parent = sg
 
-	local brand = Instance.new("TextLabel")
-	brand.Name = "Branding"
-	brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
-	brand.RichText = true
-	brand.Font = FONT
-	brand.TextSize = 26
-	brand.TextColor3 = MAIN_COLOR
-	brand.Position = UDim2.new(0, 15, 0, 15)
-	brand.Size = UDim2.new(0, 200, 0, 30)
-	brand.BackgroundTransparency = 1
-	brand.TextXAlignment = Enum.TextXAlignment.Left
-	brand.Parent = mainFrame
+    local brand = Instance.new("TextLabel")
+    brand.Name = "Branding"
+    brand.Text = "Ephemeral <font color='#A0A0A0'> </font>"
+    brand.RichText = true
+    brand.Font = FONT
+    brand.TextSize = 26
+    brand.TextColor3 = MAIN_COLOR
+    brand.Position = UDim2.new(0, 15, 0, 15)
+    brand.Size = UDim2.new(0, 200, 0, 30)
+    brand.BackgroundTransparency = 1
+    brand.TextXAlignment = Enum.TextXAlignment.Left
+    brand.Parent = mainFrame
     
     Library.BrandingLabel = brand
     Library.AccentObjects[brand] = true
 
-	self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
-	local visible = true
-	UIS.InputBegan:Connect(function(input, gpe)
-		if not gpe and input.KeyCode == self.ToggleKey then
-			visible = not visible
-			mainFrame.Visible = visible
-		end
-	end)
+    self.ToggleKey = defaultKey or Enum.KeyCode.RightControl
+    local visible = true
+    local inputConn = UIS.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == self.ToggleKey then
+            visible = not visible
+            mainFrame.Visible = visible
+        end
+    end)
 
-	self.Container = mainFrame
-	return self
+    -- Set Cleanup Function
+    _G.Ephemeral_Cleanup = function()
+        inputConn:Disconnect()
+        sg:Destroy()
+        Library.RainbowActive = false
+        _G.Ephemeral_Cleanup = nil
+    end
+
+    self.Container = mainFrame
+    return self
 end
 
 function Library:NewWindow(title, xOffset)
-	local window = {}
-	local column = Instance.new("Frame")
-	column.Size = UDim2.new(0, 140, 0, 0)
-	column.Position = UDim2.new(0, xOffset or 15, 0, 60)
-	column.AutomaticSize = Enum.AutomaticSize.Y
-	column.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	column.BackgroundTransparency = DEFAULT_TRANSPARENCY
-	column.BorderSizePixel = 0
-	column.Parent = self.Container
+    local window = {}
+    local column = Instance.new("Frame")
+    column.Size = UDim2.new(0, 140, 0, 0)
+    column.Position = UDim2.new(0, xOffset or 15, 0, 60)
+    column.AutomaticSize = Enum.AutomaticSize.Y
+    column.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    column.BackgroundTransparency = DEFAULT_TRANSPARENCY
+    column.BorderSizePixel = 0
+    column.Parent = self.Container
     
-    table.insert(Library.WindowFrames, column) -- Store for Opaque toggle
+    table.insert(Library.WindowFrames, column)
 
-	local header = Instance.new("Frame")
-	header.Size = UDim2.new(1, 0, 0, 26)
-	header.BackgroundColor3 = MAIN_COLOR
-	header.BorderSizePixel = 0
-	header.Parent = column
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 26)
+    header.BackgroundColor3 = MAIN_COLOR
+    header.BorderSizePixel = 0
+    header.Parent = column
     Library.AccentObjects[header] = false 
-	
-	local headerTitle = Instance.new("TextLabel")
+    
+    local headerTitle = Instance.new("TextLabel")
     headerTitle.Size = UDim2.new(1, 0, 1, 0)
     headerTitle.BackgroundTransparency = 1
     headerTitle.Text = title
@@ -129,64 +144,115 @@ function Library:NewWindow(title, xOffset)
     headerTitle.TextSize = 15
     headerTitle.Parent = header
 
-	MakeDraggable(column, header)
+    MakeDraggable(column, header)
 
-	local list = Instance.new("Frame")
-	list.Size = UDim2.new(1, 0, 0, 0)
-	list.Position = UDim2.new(0, 0, 0, 26)
-	list.AutomaticSize = Enum.AutomaticSize.Y
-	list.BackgroundTransparency = 1
-	list.Parent = column
+    local list = Instance.new("Frame")
+    list.Size = UDim2.new(1, 0, 0, 0)
+    list.Position = UDim2.new(0, 0, 0, 26)
+    list.AutomaticSize = Enum.AutomaticSize.Y
+    list.BackgroundTransparency = 1
+    list.Parent = column
     
-	Instance.new("UIListLayout", list).SortOrder = Enum.SortOrder.LayoutOrder
+    Instance.new("UIListLayout", list).SortOrder = Enum.SortOrder.LayoutOrder
 
-	function window:AddToggle(text, callback)
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(1, 0, 0, 22)
-		btn.BackgroundTransparency = 1
-		btn.Text = "  > " .. text
-		btn.TextColor3 = TEXT_COLOR
-		btn.Font = FONT
-		btn.TextSize = 14
-		btn.TextXAlignment = Enum.TextXAlignment.Left
-		btn.Parent = list
-		
-		local enabled = false
-		btn.MouseButton1Click:Connect(function()
-			enabled = not enabled
-			if enabled then
+    function window:AddToggle(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 0, 22)
+        btn.BackgroundTransparency = 1
+        btn.Text = "  > " .. text
+        btn.TextColor3 = TEXT_COLOR
+        btn.Font = FONT
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = list
+        
+        local enabled = false
+        btn.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            if enabled then
                 btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
                 Library.AccentObjects[btn] = true
             else
                 Library.AccentObjects[btn] = nil
                 btn.TextColor3 = TEXT_COLOR
             end
-			callback(enabled)
-		end)
-	end
+            callback(enabled)
+        end)
+    end
 
-	function window:AddButton(text, callback)
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(1, 0, 0, 22)
-		btn.BackgroundTransparency = 1
-		btn.Text = "  > " .. text
-		btn.TextColor3 = TEXT_COLOR
-		btn.Font = FONT
-		btn.TextSize = 14
-		btn.TextXAlignment = Enum.TextXAlignment.Left
-		btn.Parent = list
+    function window:AddButton(text, callback)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 0, 22)
+        btn.BackgroundTransparency = 1
+        btn.Text = "  > " .. text
+        btn.TextColor3 = TEXT_COLOR
+        btn.Font = FONT
+        btn.TextSize = 14
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = list
 
-		btn.MouseButton1Click:Connect(function()
-			-- Flash logic fixed: use current color if rainbow is on, otherwise use purple
-			btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
-			task.delay(0.3, function()
-				btn.TextColor3 = TEXT_COLOR
-			end)
-			callback()
-		end)
-	end
+        btn.MouseButton1Click:Connect(function()
+            btn.TextColor3 = Library.RainbowActive and Library.CurrentColor or MAIN_COLOR
+            task.delay(0.3, function()
+                btn.TextColor3 = TEXT_COLOR
+            end)
+            callback()
+        end)
+    end
 
-	return window
+    function window:AddSlider(text, min, max, default, callback)
+        local sliderFrame = Instance.new("Frame")
+        sliderFrame.Size = UDim2.new(1, 0, 0, 38)
+        sliderFrame.BackgroundTransparency = 1
+        sliderFrame.Parent = list
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.Text = "  " .. text .. ": " .. default
+        label.TextColor3 = TEXT_COLOR
+        label.Font = FONT
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = sliderFrame
+
+        local bg = Instance.new("Frame")
+        bg.Size = UDim2.new(0.9, 0, 0, 4)
+        bg.Position = UDim2.new(0.05, 0, 0.7, 0)
+        bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        bg.BorderSizePixel = 0
+        bg.Parent = sliderFrame
+
+        local fill = Instance.new("Frame")
+        fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
+        fill.BackgroundColor3 = MAIN_COLOR
+        fill.BorderSizePixel = 0
+        fill.Parent = bg
+        Library.AccentObjects[fill] = false
+
+        local function update()
+            local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            local value = math.floor(min + (max - min) * percent)
+            fill.Size = UDim2.new(percent, 0, 1, 0)
+            label.Text = "  " .. text .. ": " .. value
+            callback(value)
+        end
+
+        bg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                local conn
+                conn = RunService.RenderStepped:Connect(function()
+                    if not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                        conn:Disconnect()
+                        return
+                    end
+                    update()
+                end)
+            end
+        end)
+    end
+
+    return window
 end
 
 function Library:SetRainbow(state)
@@ -204,7 +270,6 @@ function Library:SetRainbow(state)
     end
 end
 
--- NEW OPAQUE LOGIC
 function Library:SetOpaque(state)
     local targetTransparency = state and 0 or DEFAULT_TRANSPARENCY
     for _, frame in pairs(Library.WindowFrames) do
