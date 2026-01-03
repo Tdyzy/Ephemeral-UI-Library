@@ -337,7 +337,6 @@ function window:AddDropdown(text, list_items, callback)
         
         return dropdown
     end
-    --maybe error
 
 function window:AddKeybind(text, default, callback)
     local keybind = {}
