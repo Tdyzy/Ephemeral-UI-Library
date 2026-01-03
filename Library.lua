@@ -202,29 +202,28 @@ function Library:NewWindow(title, xOffset)
 
 function window:AddSlider(text, min, max, default, callback)
     local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 45) -- Increased frame height
+    sliderFrame.Size = UDim2.new(1, 0, 0, 45) 
     sliderFrame.BackgroundTransparency = 1
     sliderFrame.Parent = list
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Text = "  " .. text .. ": " .. default
+    label.Size = UDim2.new(1, 0, 0, 22) -- Match button height
+    label.Text = "  > " .. text .. ": " .. default -- Added "> " prefix
     label.TextColor3 = TEXT_COLOR
     label.Font = FONT
-    label.TextSize = 12
+    label.TextSize = 14 -- Matched to Buttons/Toggles
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.BackgroundTransparency = 1
     label.Parent = sliderFrame
 
-    -- The "Gutter" (The background of the slider)
+    -- The Gutter (Background bar)
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0.9, 0, 0, 8) -- Increased thickness from 4 to 8
-    bg.Position = UDim2.new(0.05, 0, 0.65, 0)
+    bg.Size = UDim2.new(0.85, 0, 0, 8) -- Fatter bar
+    bg.Position = UDim2.new(0.07, 0, 0.7, 0)
     bg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     bg.BorderSizePixel = 0
     bg.Parent = sliderFrame
     
-    -- Rounded corners for the bar
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = bg
@@ -242,7 +241,7 @@ function window:AddSlider(text, min, max, default, callback)
     
     Library.AccentObjects[fill] = false
 
-    -- The "Knob" (Easier to see and click)
+    -- The Knob
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 12, 0, 12)
     knob.Position = UDim2.new(1, -6, 0.5, -6)
@@ -258,11 +257,10 @@ function window:AddSlider(text, min, max, default, callback)
         local percent = math.clamp((UIS:GetMouseLocation().X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
         local value = math.floor(min + (max - min) * percent)
         fill.Size = UDim2.new(percent, 0, 1, 0)
-        label.Text = "  " .. text .. ": " .. value
+        label.Text = "  > " .. text .. ": " .. value
         callback(value)
     end
 
-    -- Improved Click Detection (Checks the whole frame, not just the tiny bar)
     sliderFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             local conn
